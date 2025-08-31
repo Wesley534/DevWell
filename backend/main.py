@@ -1,7 +1,7 @@
 # backend/main.py
 from fastapi import FastAPI
-from .database import engine, Base
-from .routers import auth, users, wellness # We'll create these
+from backend.database import engine, Base
+from backend.routers import auth, users, wellness # We'll create these
 
 # Create all database tables (for development, use Alembic for production)
 Base.metadata.create_all(bind=engine)
