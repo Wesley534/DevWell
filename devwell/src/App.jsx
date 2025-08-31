@@ -1,8 +1,8 @@
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
-import LandingPage from './Dashboard';
-import DashboardStats from './DashboardStats';
+import Dashboard from './pages/Dashboard';
+import DashboardStats from './pages/DashboardStats';
 
 function App() {
   return (
@@ -11,7 +11,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/" element={<LandingPage />} />
-          <Route path="/dashboard" element={<DashboardStats />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           
         </Routes>
       </Router>
