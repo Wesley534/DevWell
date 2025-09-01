@@ -133,6 +133,7 @@ export const Dashboard = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+
           {insights.map((insight, index) => (
             <div key={index} className="p-4 rounded-lg bg-emerald-100 dark:bg-emerald-800 border border-green-200 dark:border-gray-700">
               <p className="text-sm text-emerald-700 dark:text-emerald-300">{insight}</p>
