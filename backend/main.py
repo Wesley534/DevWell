@@ -1,11 +1,16 @@
 # backend/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import auth_router, users_router, wellness_router, dashboard_router, mood_router, hydration_router, coding_router
+from backend.routers import auth_router, users_router, wellness_router, dashboard_router, mood_router, hydration_router, coding_router, profile_router
 from backend.database import Base, engine
 from backend.config import settings
+from sqlalchemy.orm import configure_mappers
+
 
 app = FastAPI(title="DevWell API")
+
+configure_mappers()
+
 
 # CORS configuration
 app.add_middleware(
@@ -27,4 +32,5 @@ app.include_router(dashboard_router)
 app.include_router(mood_router)  # Add this
 app.include_router(hydration_router)  # Add this
 app.include_router(coding_router)  # Add this
+app.include_router(profile_router)  # Add this
 
