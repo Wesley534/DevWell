@@ -1,23 +1,23 @@
 # backend/config.py
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
-
+from typing import List, Optional
+import os
 
 class Settings(BaseSettings):
-    SECRET_KEY: str = "your-super-secret-key" # CHANGE THIS IN PRODUCTION
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    SECRET_KEY: str = os.getenv("SECRET_KEY", os.urandom(32).hex())  # Secure default
+    SQLALCHEMY_DATABASE_URL: str = os.getenv("SQLALCHEMY_DATABASE_URL", "sqlite:///./devwell.db")
+    ALLOWED_ORIGINS: List[str] = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 
-    # OAuth
+    # OAuth (optional, commented out as per your code)
     # GITHUB_CLIENT_ID: Optional[str] = None
     # GITHUB_CLIENT_SECRET: Optional[str] = None
     # GOOGLE_CLIENT_ID: Optional[str] = None
     # GOOGLE_CLIENT_SECRET: Optional[str] = None
 
-    # AI API Keys
+    # AI API Keys (optional)
     OPENAI_API_KEY: Optional[str] = None
     HUGGINGFACE_API_KEY: Optional[str] = None
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 settings = Settings()

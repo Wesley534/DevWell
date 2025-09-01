@@ -1,37 +1,60 @@
-# backend/routers/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from datetime import timedelta
-
-from backend import crud, schemas, models, security
+from backend.schemas import UserCreate, UserLogin, Token
+from backend.crud import get_user_by_email, create_user, verify_password, get_user_profile
+from backend.security import create_access_token
 from backend.database import get_db
-from backend.config import settings # For JWT and OAuth secrets
+import logging
 
-router = APIRouter()
+router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-@router.post("/signup", response_model=schemas.User)
-def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, email=user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db=db, user=user)
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-@router.post("/token", response_model=schemas.Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = crud.authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = security.create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
+@router.post("/signup", response_model=Token)
+def signup(user: UserCreate, db: Session = Depends(get_db)):
+    try:
+        db_user = get_user_by_email(db, user.email)
+        if db_user:
+            logger.error(f"Signup failed: Email already registered: {user.email}")
+            raise HTTPException(status_code=400, detail="Email already registered")
+        db_user = create_user(db, user.email, user.password)
+        access_token = create_access_token(data={"sub": user.email}, remember_me=False)  # Default remember_me to False for signup
+        logger.info(f"Signup successful for user: {user.email}, needs_onboarding: true")
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "needs_onboarding": True  # New users need onboarding
+        }
+    except Exception as e:
+        logger.error(f"Unexpected error during signup for email {user.email}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-# TODO: Implement GitHub & Google OAuth endpoints
-# These will involve redirecting to the OAuth provider,
-# handling the callback, and exchanging the code for a token.
+@router.post("/login", response_model=Token)
+def login(user: UserLogin, db: Session = Depends(get_db)):
+    try:
+        db_user = get_user_by_email(db, user.email)
+        if not db_user or not verify_password(user.password, db_user.hashed_password):
+            logger.error(f"Login failed for email: {user.email}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        access_token = create_access_token(data={"sub": user.email}, remember_me=user.remember_me)
+        try:
+            profile = get_user_profile(db, db_user.id)
+            needs_onboarding = profile is None
+            logger.info(f"Login successful for user: {user.email}, needs_onboarding: {needs_onboarding}")
+        except Exception as e:
+            logger.error(f"Error fetching user profile for user_id {db_user.id}: {str(e)}")
+            needs_onboarding = True  # Default to True if profile fetch fails
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "needs_onboarding": needs_onboarding
+        }
+    except Exception as e:
+        logger.error(f"Unexpected error during login for email {user.email}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
