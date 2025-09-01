@@ -42,3 +42,13 @@ uvicorn==0.35.0
 uvloop==0.21.0
 watchfiles==1.1.0
 websockets==15.0.1
+# backend/requirements.txt
+fastapi==0.116.1
+uvicorn==0.35.0
+sqlalchemy==2.0.43
+alembic==1.16.5
+pydantic==2.11.7
+pydantic-settings==2.6.1
+python-dotenv==1.1.1
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
