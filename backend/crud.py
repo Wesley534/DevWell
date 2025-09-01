@@ -1,4 +1,4 @@
-# backend/crud.py (partial update)
+# backend/crud.py
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 from datetime import datetime, timedelta
@@ -8,7 +8,6 @@ from backend.schemas import MoodLogCreate, HydrationLogCreate, CodingSessionCrea
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Existing CRUD functions (unchanged)
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
@@ -56,7 +55,6 @@ def get_recent_focus_sessions(db: Session, user_id: int, days: int = 7):
     cutoff = datetime.utcnow() - timedelta(days=days)
     return db.query(FocusSession).filter(and_(FocusSession.user_id == user_id, FocusSession.created_at >= cutoff)).all()
 
-# Updated Mood CRUD
 def create_mood_log(db: Session, user_id: int, mood_log: MoodLogCreate):
     db_mood = MoodLog(**mood_log.dict(), user_id=user_id)
     db.add(db_mood)
@@ -68,7 +66,6 @@ def get_recent_mood_logs(db: Session, user_id: int, days: int = 7):
     cutoff = datetime.utcnow() - timedelta(days=days)
     return db.query(MoodLog).filter(and_(MoodLog.user_id == user_id, MoodLog.created_at >= cutoff)).order_by(MoodLog.created_at.asc()).all()
 
-# Update dashboard stats to include tiredness
 def get_dashboard_stats(db: Session, user_id: int, days: int = 7) -> DashboardResponse:
     cutoff = datetime.utcnow() - timedelta(days=days)
 
@@ -84,31 +81,33 @@ def get_dashboard_stats(db: Session, user_id: int, days: int = 7) -> DashboardRe
         color="mood-excellent"
     )
 
-    # Hydration stats (unchanged)
+    # Hydration stats
     hydration_logs = get_recent_hydration_logs(db, user_id, days)
-    total_glasses = sum(log.glasses_drunk for log in hydration_logs)
+    total_glasses = sum(log.water_glasses for log in hydration_logs)
+    total_coffee = sum(log.coffee_cups for log in hydration_logs)
     total_goal = sum(log.daily_goal for log in hydration_logs)
     hydration_pct = (total_glasses / total_goal * 100) if total_goal > 0 else 0
     hydration_stat = DashboardStat(
         title="Hydration Goal",
         value=f"{hydration_pct:.0f}%",
-        description=f"{total_glasses} out of {total_goal} glasses daily",
+        description=f"{total_glasses} glasses, {total_coffee} coffee cups, goal {total_goal} glasses",
         trend=8,
         color="hydration-excellent"
     )
 
-    # Coding sessions stats (unchanged)
+    # Coding sessions stats
     coding_sessions = get_recent_coding_sessions(db, user_id, days)
     total_sessions = len(coding_sessions)
+    total_coding_minutes = sum(session.duration_minutes for session in coding_sessions)
     coding_stat = DashboardStat(
         title="Coding Sessions",
         value=str(total_sessions),
-        description="Total sessions this week",
+        description=f"Total {total_coding_minutes} minutes this week",
         trend=-5,
         color="emerald-500"
     )
 
-    # Focus time stats (unchanged)
+    # Focus time stats
     focus_sessions = get_recent_focus_sessions(db, user_id, days)
     total_focus_hours = sum(session.duration_minutes for session in focus_sessions) / 60
     avg_focus_hours = total_focus_hours / days if days > 0 else 0
@@ -126,7 +125,7 @@ def get_dashboard_stats(db: Session, user_id: int, days: int = 7) -> DashboardRe
     if avg_mood >= 4:
         insights.append("Great work this week! Maintain excellent hydration and consistent coding sessions.")
     if avg_tiredness > 7:
-        insights.append("You seem quite tired. Consider taking short breaks or a rest day.")
+        insights.append("You seem quite tired. Consider taking short breaks or trying some Dark Chocolate Almonds.")
     if hydration_pct >= 80:
         insights.append("Your hydration levels are strong. Keep it up!")
     if total_sessions > 20:
