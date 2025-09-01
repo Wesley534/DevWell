@@ -1,10 +1,10 @@
-# backend/crud.py
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 from datetime import datetime, timedelta
-from backend.models import User, MoodLog, HydrationLog, CodingSession, FocusSession
+from backend.models import User, MoodLog, HydrationLog, CodingSession, FocusSession, UserProfile
 from passlib.context import CryptContext
-from backend.schemas import MoodLogCreate, HydrationLogCreate, CodingSessionCreate, FocusSessionCreate, DashboardResponse, DashboardStat
+from backend.schemas import MoodLogCreate, HydrationLogCreate, CodingSessionCreate, FocusSessionCreate, DashboardResponse, DashboardStat, UserProfileCreate
+from typing import Optional, List
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -66,6 +66,16 @@ def get_recent_mood_logs(db: Session, user_id: int, days: int = 7):
     cutoff = datetime.utcnow() - timedelta(days=days)
     return db.query(MoodLog).filter(and_(MoodLog.user_id == user_id, MoodLog.created_at >= cutoff)).order_by(MoodLog.created_at.asc()).all()
 
+def create_user_profile(db: Session, user_id: int, profile: UserProfileCreate):
+    db_profile = UserProfile(**profile.dict(), user_id=user_id)
+    db.add(db_profile)
+    db.commit()
+    db.refresh(db_profile)
+    return db_profile
+
+def get_user_profile(db: Session, user_id: int) -> Optional[UserProfile]:
+    return db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
+
 def get_dashboard_stats(db: Session, user_id: int, days: int = 7) -> DashboardResponse:
     cutoff = datetime.utcnow() - timedelta(days=days)
 
@@ -119,13 +129,23 @@ def get_dashboard_stats(db: Session, user_id: int, days: int = 7) -> DashboardRe
         color="productivity-high"
     )
 
+    # Get diet preference for snack suggestion
+    profile = get_user_profile(db, user_id)
+    snack = {
+        "vegetarian": "Dark Chocolate Almonds",
+        "vegan": "Roasted Chickpeas",
+        "protein-focused": "Beef Jerky",
+        "balanced": "Trail Mix",
+        "other": "Granola Bar"
+    }.get(profile.diet_preference if profile else "balanced", "Trail Mix")
+
     stats = [mood_stat, hydration_stat, coding_stat, focus_stat]
 
     insights = []
     if avg_mood >= 4:
         insights.append("Great work this week! Maintain excellent hydration and consistent coding sessions.")
     if avg_tiredness > 7:
-        insights.append("You seem quite tired. Consider taking short breaks or trying some Dark Chocolate Almonds.")
+        insights.append(f"You seem quite tired. Consider taking short breaks or trying some {snack}.")
     if hydration_pct >= 80:
         insights.append("Your hydration levels are strong. Keep it up!")
     if total_sessions > 20:
