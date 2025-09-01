@@ -1,37 +1,30 @@
 # backend/routers/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from datetime import timedelta
-
-from backend import crud, schemas, models, security
+from backend.schemas import UserCreate, UserLogin, Token
+from backend.crud import get_user_by_email, create_user, verify_password
+from backend.security import create_access_token
 from backend.database import get_db
-from backend.config import settings # For JWT and OAuth secrets
 
-router = APIRouter()
+router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-@router.post("/signup", response_model=schemas.User)
-def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, email=user.email)
+@router.post("/signup", response_model=Token)
+def signup(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = get_user_by_email(db, user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db=db, user=user)
+    db_user = create_user(db, user.email, user.password)
+    access_token = create_access_token(data={"sub": user.email}, remember_me=user.remember_me)
+    return {"access_token": access_token, "token_type": "bearer"}
 
-@router.post("/token", response_model=schemas.Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = crud.authenticate_user(db, form_data.username, form_data.password)
-    if not user:
+@router.post("/login", response_model=Token)
+def login(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = get_user_by_email(db, user.email)
+    if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = security.create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
+    access_token = create_access_token(data={"sub": user.email}, remember_me=user.remember_me)
     return {"access_token": access_token, "token_type": "bearer"}
-
-# TODO: Implement GitHub & Google OAuth endpoints
-# These will involve redirecting to the OAuth provider,
-# handling the callback, and exchanging the code for a token.

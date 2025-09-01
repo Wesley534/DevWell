@@ -6,6 +6,8 @@ import { Dashboard } from "./pages/Dashboard";
 import { MoodPage } from "./pages/MoodPage";
 import { HydrationPage } from "./pages/HydrationPage";
 import { CodingPage } from "./pages/CodingPage";
+import { LoginPage } from "./pages/LoginPage";
+import { SignupPage } from "./pages/SignupPage";
 import "./index.css"; // Your main Tailwind CSS file
 
 function App() {
@@ -15,11 +17,14 @@ function App() {
         {/* Standalone route for LandingPage */}
         <Route path="/" element={<LandingPage />} />
         {/* Authenticated routes wrapped in MainLayout */}
+         <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/mood" element={<MoodPage />} />
           <Route path="/hydration" element={<HydrationPage />} />
           <Route path="/coding" element={<CodingPage />} />
+         
         </Route>
       </Routes>
     </Router>
