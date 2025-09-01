@@ -1,21 +1,26 @@
 # backend/main.py
 from fastapi import FastAPI
-from backend.database import engine, Base
-from backend.routers import auth, users, wellness # We'll create these
+from fastapi.middleware.cors import CORSMiddleware
+from backend.routers import auth_router, users_router, wellness_router, dashboard_router
+from backend.database import Base, engine
+from backend.config import settings
 
-# Create all database tables (for development, use Alembic for production)
-Base.metadata.create_all(bind=engine)
+app = FastAPI(title="DevWell API")
 
-app = FastAPI(
-    title="DevWell API",
-    description="API for the DevWell wellness application for developers.",
-    version="0.1.0",
+# CORS configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
-app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
-app.include_router(wellness.router, prefix="/api/v1/wellness", tags=["Wellness"])
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
-@app.get("/")
-async def read_root():
-    return {"message": "Welcome to DevWell API"}
+# Include routers
+app.include_router(auth_router)
+app.include_router(users_router)
+app.include_router(wellness_router)
+app.include_router(dashboard_router)
