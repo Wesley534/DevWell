@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import { Heart, User, Settings, Moon, Sun } from 'lucide-react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { Heart, User, Settings, Moon, Sun, LogOut } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/Tabs';
 
 export const MainLayout = () => {
-  const [isDark, setIsDark] = useState(false); // Manage dark mode state here
+  const [isDark, setIsDark] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false); // State for profile dropdown
+  const navigate = useNavigate();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
     document.documentElement.classList.toggle('dark');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+    setIsProfileMenuOpen(false);
+    navigate('/login');
   };
 
   return (
@@ -25,7 +34,7 @@ export const MainLayout = () => {
               DevWell
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
               {isDark ? <Sun className="h-4 w-4 text-emerald-500" /> : <Moon className="h-4 w-4 text-emerald-500" />}
@@ -33,9 +42,27 @@ export const MainLayout = () => {
             <Button variant="ghost" size="icon">
               <Settings className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
             </Button>
-            <Button variant="ghost" size="icon">
-              <User className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
-            </Button>
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                aria-label="Profile menu"
+              >
+                <User className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
+              </Button>
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-green-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-emerald-100 dark:hover:bg-emerald-900"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -48,19 +75,19 @@ export const MainLayout = () => {
               AI-Powered Wellness for Developers
             </h2>
             <p className="text-lg text-emerald-700 dark:text-emerald-300 max-w-2xl mx-auto">
-              Track your mental health, hydration, and coding sessions with personalized AI insights 
+              Track your mental health, hydration, and coding sessions with personalized AI insights
               to maintain peak productivity and well-being.
             </p>
           </div>
 
           <Tabs className="space-y-4">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger to="/dashboard">Dashboard</TabsTrigger> {/* Use to="/" for the root dashboard */}
+              <TabsTrigger to="/dashboard">Dashboard</TabsTrigger>
               <TabsTrigger to="/mood">Mental Health</TabsTrigger>
               <TabsTrigger to="/hydration">Hydration</TabsTrigger>
               <TabsTrigger to="/coding">Coding Sessions</TabsTrigger>
             </TabsList>
-            
+
             {/* The content of the selected tab will be rendered here by Outlet */}
             <div className="py-4">
               <Outlet />
