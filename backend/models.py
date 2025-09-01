@@ -2,7 +2,7 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from backend.database import Base  # Changed from backend.database
+from backend.database import Base
 
 class User(Base):
     __tablename__ = "users"
@@ -26,10 +26,12 @@ class MoodLog(Base):
 
 class HydrationLog(Base):
     __tablename__ = "hydration_logs"
+    __table_args__ = {'extend_existing': True}  # Prevent redefinition errors
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    glasses_drunk = Column(Integer, nullable=False)
-    daily_goal = Column(Integer, nullable=False, default=8)
+    water_glasses = Column(Integer, nullable=False)  # Renamed from glasses_drunk
+    coffee_cups = Column(Integer, nullable=False, default=0)  # Added for coffee tracking
+    daily_goal = Column(Integer, nullable=False, default=8)  # Kept from original
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     user = relationship("User", back_populates="hydration_logs")
 
