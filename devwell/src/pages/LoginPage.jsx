@@ -4,6 +4,7 @@ import { Label } from '../components/ui/Label';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'react-toastify'; // Added for success/error feedback
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -13,13 +14,14 @@ export const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false); // Added for better UX
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (token) {
+      console.log('Token found, redirecting to /dashboard');
       navigate('/dashboard');
     }
   }, [navigate]);
@@ -29,27 +31,52 @@ export const LoginPage = () => {
     setError('');
     setLoading(true);
 
+    const payload = { email, password, remember_me: rememberMe };
+    console.log('Submitting login payload:', payload);
+
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, remember_me: rememberMe }),
+        body: JSON.stringify(payload),
       });
 
+      const data = await response.json();
+      console.log('Login response:', data);
+
       if (response.ok) {
-        const data = await response.json();
+        const { access_token, token_type, needs_onboarding } = data;
+        console.log('Access Token:', access_token);
+        console.log('Token Type:', token_type);
+        console.log('Needs Onboarding:', needs_onboarding);
+
+        // Store token
         if (rememberMe) {
-          localStorage.setItem('token', data.access_token);
+          localStorage.setItem('token', access_token);
+          console.log('Token stored in localStorage');
         } else {
-          sessionStorage.setItem('token', data.access_token);
+          sessionStorage.setItem('token', access_token);
+          console.log('Token stored in sessionStorage');
         }
-        navigate(location.state?.from || '/dashboard');
+
+        toast.success('Login successful!');
+
+        // Redirect based on needs_onboarding
+        if (needs_onboarding) {
+          console.log('Redirecting to /onboarding');
+          navigate('/onboarding');
+        } else {
+          console.log('Redirecting to:', location.state?.from || '/dashboard');
+          navigate(location.state?.from || '/dashboard');
+        }
       } else {
-        const data = await response.json();
         setError(data.detail || 'Login failed. Please check your credentials.');
+        toast.error(data.detail || 'Login failed. Please check your credentials.');
       }
     } catch (error) {
+      console.error('Login error:', error);
       setError('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

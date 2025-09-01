@@ -6,6 +6,7 @@ from .dashboard import router as dashboard_router
 from .mood import router as mood_router  # Add this
 from .hydration import router as hydration_router  # Add this
 from .coding import router as coding_router  # Add this
+from .profile import router as profile_router  # Add this
 
 
 
