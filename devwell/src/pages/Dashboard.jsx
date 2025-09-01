@@ -151,10 +151,7 @@ export const Dashboard = () => {
               implementing the Pomodoro Technique to maximize your coding
               efficiency.
             </p>
-            {/* This div is crucial for testing the theme switch */}
-            <div className="p-6 rounded-lg bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100 mt-4">
-              Toggle me and watch colors change 🎨
-            </div>
+          
           </div>
         </CardContent>
       </Card>

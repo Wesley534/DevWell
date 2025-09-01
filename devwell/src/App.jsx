@@ -7,6 +7,8 @@ import { MoodPage } from "./pages/MoodPage";
 import { HydrationPage } from "./pages/HydrationPage";
 import { CodingPage } from "./pages/CodingPage";
 import "./index.css"; // Your main Tailwind CSS file
+import {Settings }from "./pages/Settings";
+
 
 function App() {
   return (
@@ -20,6 +22,7 @@ function App() {
           <Route path="/mood" element={<MoodPage />} />
           <Route path="/hydration" element={<HydrationPage />} />
           <Route path="/coding" element={<CodingPage />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>
