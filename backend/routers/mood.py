@@ -39,3 +39,19 @@ async def get_weekly_mood_trends(
     ).order_by(MoodLog.created_at.asc()).all()
     print("Trends:", [t.__dict__ for t in trends])  # Debug
     return trends
+
+@router.get("/latest", response_model=MoodLogOut)
+async def get_latest_mood(
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = get_user_by_email(db, current_user)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    latest_mood = db.query(MoodLog).filter(
+        MoodLog.user_id == user.id
+    ).order_by(MoodLog.created_at.desc()).first()
+    if not latest_mood:
+        raise HTTPException(status_code=404, detail="No mood logs found")
+    print("Latest mood:", latest_mood.__dict__)
+    return latest_mood

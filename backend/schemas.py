@@ -1,9 +1,9 @@
-# backend/schemas.py (partial update)
-from pydantic import BaseModel, EmailStr
+# backend/schemas.py
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 from datetime import datetime
 
-# Existing schemas (unchanged)
+# User schemas
 class UserBase(BaseModel):
     email: EmailStr
 
@@ -24,17 +24,51 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+# Hydration schemas (updated to match frontend and model)
 class HydrationLogCreate(BaseModel):
-    glasses_drunk: int
-    daily_goal: Optional[int] = 8
+    water_glasses: int = Field(..., ge=0)
+    coffee_cups: int = Field(..., ge=0)
+    daily_goal: int = Field(..., ge=0)
 
+class HydrationLogOut(HydrationLogCreate):
+    id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+# Mood schemas
+class MoodLogCreate(BaseModel):
+    mood_score: float = Field(..., ge=1.0, le=5.0)
+    notes: Optional[str] = None
+    tiredness_level: Optional[int] = Field(None, ge=0, le=10)
+
+class MoodLogOut(MoodLogCreate):
+    id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+# Coding and Focus schemas
 class CodingSessionCreate(BaseModel):
     duration_minutes: int
     notes: Optional[str] = None
 
+class CodingSessionOut(CodingSessionCreate):
+    id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
 class FocusSessionCreate(BaseModel):
     duration_minutes: int
 
+class FocusSessionOut(FocusSessionCreate):
+    id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+# Dashboard schemas
 class DashboardStat(BaseModel):
     title: str
     value: str
@@ -45,34 +79,3 @@ class DashboardStat(BaseModel):
 class DashboardResponse(BaseModel):
     stats: List[DashboardStat]
     insights: List[str]
-
-# Updated Mood schemas
-class MoodLogCreate(BaseModel):
-    mood_score: float
-    notes: Optional[str] = None
-    tiredness_level: Optional[int] = None  # 0 to 10
-
-class MoodLogOut(MoodLogCreate):
-    id: int
-    created_at: datetime
-    class Config:
-        from_attributes = True
-
-# Other output schemas (unchanged)
-class HydrationLogOut(HydrationLogCreate):
-    id: int
-    created_at: datetime
-    class Config:
-        from_attributes = True
-
-class CodingSessionOut(CodingSessionCreate):
-    id: int
-    created_at: datetime
-    class Config:
-        from_attributes = True
-
-class FocusSessionOut(FocusSessionCreate):
-    id: int
-    created_at: datetime
-    class Config:
-        from_attributes = True
