@@ -25,6 +25,7 @@ function App() {
           <Route path="/onboarding" element={<OnboardingPage />} />
                       <Route path="/settings" element={<Settings />} />
 
+          <Route path="/onboarding" element={<OnboardingPage />} />
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/mood" element={<MoodPage />} />
