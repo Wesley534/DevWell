@@ -1,44 +1,62 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
-import {Card, CardHeader, CardTitle, CardContent} from "../components/ui/Card";
+import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card";
 
 export function Settings() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("notifications");
   const [remindersEnabled, setRemindersEnabled] = useState(false);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [language, setLanguage] = useState("English");
 
+  const tabs = ["notifications", "privacy"];
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">Settings</h1>
+    <div className="min-h-screen p-6 bg-gradient-to-br from-green-50 via-green-100 to-emerald-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Header with Back Button */}
+      <div className="max-w-4xl mx-auto flex items-center justify-between mb-8">
+        <Button
+          variant="outline"
+          size="default"
+          onClick={() => navigate("/dashboard")}
+          className="flex items-center gap-2"
+        >
+          ← Back
+        </Button>
+        <h1 className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">Settings</h1>
+        <div className="w-16" /> {/* Placeholder for spacing */}
+      </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b pb-2">
-        {["notifications", "privacy", "integrations", "data", "preferences"].map(tab => (
+      <div className="max-w-4xl mx-auto flex gap-4 mb-6 border-b pb-2">
+        {tabs.map(tab => (
           <Button
             key={tab}
             variant={activeTab === tab ? "default" : "ghost"}
             size="default"
             onClick={() => setActiveTab(tab)}
+            className="capitalize"
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab}
           </Button>
         ))}
       </div>
 
       {/* Tab Content */}
-      <div>
+      <div className="max-w-4xl mx-auto space-y-6">
         {activeTab === "notifications" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Notifications</CardTitle>
+          <Card className="hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="bg-emerald-100 dark:bg-emerald-800 rounded-t-lg p-4">
+              <CardTitle className="text-emerald-800 dark:text-emerald-200">Notifications</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={remindersEnabled}
                   onChange={() => setRemindersEnabled(!remindersEnabled)}
+                  className="accent-emerald-500"
                 />
                 Enable reminders
               </label>
@@ -47,61 +65,20 @@ export function Settings() {
         )}
 
         {activeTab === "privacy" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Privacy</CardTitle>
+          <Card className="hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="bg-emerald-100 dark:bg-emerald-800 rounded-t-lg p-4">
+              <CardTitle className="text-emerald-800 dark:text-emerald-200">Privacy</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={analyticsEnabled}
                   onChange={() => setAnalyticsEnabled(!analyticsEnabled)}
+                  className="accent-emerald-500"
                 />
                 Share analytics data
               </label>
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === "integrations" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Integrations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button variant="default">Connect Google</Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === "data" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Data Management</CardTitle>
-            </CardHeader>
-            <CardContent className="flex gap-2">
-              <Button variant="outline">Export Data</Button>
-              <Button variant="default">Delete Account</Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === "preferences" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Preferences</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <label className="block mb-2">Language</label>
-              <select
-                className="border p-2 rounded"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-              >
-                <option>English</option>
-                <option>Swahili</option>
-              </select>
             </CardContent>
           </Card>
         )}
@@ -109,4 +86,5 @@ export function Settings() {
     </div>
   );
 }
+
 export default Settings;

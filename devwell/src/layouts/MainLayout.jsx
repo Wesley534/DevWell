@@ -39,7 +39,10 @@ export const MainLayout = () => {
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
               {isDark ? <Sun className="h-4 w-4 text-emerald-500" /> : <Moon className="h-4 w-4 text-emerald-500" />}
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon"
+              onClick={() => navigate("/settings")}
+              aria-label="Settings"
+            >
               <Settings className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
             </Button>
             <div className="relative">
