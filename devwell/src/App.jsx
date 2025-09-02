@@ -10,6 +10,8 @@ import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import "./index.css"; // Your main Tailwind CSS file
+import {Settings }from "./pages/Settings";
+
 
 function App() {
   return (
@@ -21,12 +23,15 @@ function App() {
          <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
+                      <Route path="/settings" element={<Settings />} />
+
+          <Route path="/onboarding" element={<OnboardingPage />} />
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/mood" element={<MoodPage />} />
           <Route path="/hydration" element={<HydrationPage />} />
           <Route path="/coding" element={<CodingPage />} />
-         
+
         </Route>
       </Routes>
     </Router>
