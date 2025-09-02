@@ -6,7 +6,8 @@ import os
 class Settings(BaseSettings):
     SECRET_KEY: str = os.getenv("SECRET_KEY", os.urandom(32).hex())  # Secure default
     SQLALCHEMY_DATABASE_URL: str = os.getenv("SQLALCHEMY_DATABASE_URL", "sqlite:///./devwell.db")
-    ALLOWED_ORIGINS: List[str] = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+    ALLOWED_ORIGINS: List[str] = ["https://aidevwell.netlify.app"]
+
 
     # OAuth (optional, commented out as per your code)
     # GITHUB_CLIENT_ID: Optional[str] = None

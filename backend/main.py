@@ -34,3 +34,4 @@ app.include_router(hydration_router)  # Add this
 app.include_router(coding_router)  # Add this
 app.include_router(profile_router)  # Add this
 
+print("CORS origins:", settings.ALLOWED_ORIGINS)
