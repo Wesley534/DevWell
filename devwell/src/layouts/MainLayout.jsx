@@ -80,12 +80,14 @@ export const MainLayout = () => {
                 <Moon className="h-5 w-5 text-emerald-500" />
               )}
             </Button>
+
             <Button
               variant="ghost"
               size="icon"
               className="hover:bg-emerald-100/50 dark:hover:bg-blue-900/50 hover:shadow-sm hover:shadow-emerald-500/20"
             >
               <Settings className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+
             </Button>
             <div className="relative">
               <Button
