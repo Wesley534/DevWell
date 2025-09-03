@@ -30,4 +30,4 @@ log.txt
 __pycache__/
 *.py[cod]                                                                                                                                                                                                                                   devwell.db
 
-
+devwell.db
