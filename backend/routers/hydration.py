@@ -29,6 +29,7 @@ async def get_weekly_hydration_trends(
     current_user: str = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    
     user = get_user_by_email(db, current_user)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -39,3 +40,19 @@ async def get_weekly_hydration_trends(
     ).order_by(HydrationLog.created_at.asc()).all()
     print("Hydration trends:", [t.__dict__ for t in trends])  # Debug
     return trends
+
+@router.get("/latest", response_model=HydrationLogOut)
+async def get_latest_hydration(
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = get_user_by_email(db, current_user)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    latest_log = db.query(HydrationLog).filter(
+        HydrationLog.user_id == user.id
+    ).order_by(HydrationLog.created_at.desc()).first()
+    if not latest_log:
+        raise HTTPException(status_code=404, detail="No hydration logs found")
+    print("Latest hydration:", latest_log.__dict__)
+    return latest_log

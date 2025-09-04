@@ -154,7 +154,8 @@ export const Dashboard = () => {
         });
         if (moodResponse.ok) {
           const data = await moodResponse.json();
-          setLatestMood(data.mood || null);
+          
+          setLatestMood(data.mood_score|| null);
         } else {
           setError('Failed to load latest mood');
           toast.error('Failed to load latest mood');
@@ -165,11 +166,33 @@ export const Dashboard = () => {
       } finally {
         setLoading(false);
       }
-    };
 
+      // Fetch latest hydration
+const hydrationResponse = await fetch(`${API_URL}/api/hydration/latest`, {
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+});
+
+if (hydrationResponse.ok) {
+  const data = await hydrationResponse.json();
+  // Update the stats state with the latest hydration
+  setStats(prev => ({
+    ...prev,
+    hydration_glasses: data.water_glasses || 0, // make sure this matches your schema field
+  }));
+} else {
+  toast.error('Failed to load latest hydration');
+}
+
+    };
+      
+    
     fetchDashboardData();
   }, [navigate]);
 
+  
   const toggleTheme = () => setIsDark(!isDark);
 
   const formatTime = (seconds) => {
@@ -179,6 +202,12 @@ export const Dashboard = () => {
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+   const addHydrationGlass = () => {
+  setStats(prev => ({
+    ...prev,
+    hydration_glasses: Math.min(prev.hydration_glasses + 1, prev.hydration_goal)
+  }));
+};
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -227,8 +256,9 @@ export const Dashboard = () => {
             <CardContent>
               <Progress value={stats.mood_score * 20} className="h-2 bg-emerald-100 dark:bg-blue-900" />
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                Mood Score: {stats.mood_score}/5
-                {latestMood && ` (Latest: ${latestMood}/5)`}
+             Mood Score: {latestMood ? latestMood : stats.mood_score}/5
+              {/* Mood Score: {stats.mood_score}/5*/}
+              {/* {latestMood && ` (Latest: ${latestMood})`} */}
               </p>
               {weeklyTrends.mood.length > 0 && (
                 <div className="mt-4">
@@ -257,6 +287,7 @@ export const Dashboard = () => {
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                 {stats.hydration_glasses}/{stats.hydration_goal} glasses
               </p>
+              
               {weeklyTrends.hydration.length > 0 && (
                 <div className="mt-4">
                   <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Weekly Hydration Trend</p>
