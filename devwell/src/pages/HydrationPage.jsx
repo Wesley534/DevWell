@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import { Coffee, Droplet, RotateCcw, Send } from 'lucide-react';
-
+import { hydrationService } from '../utils/hydrationService';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const HydrationPage = () => {
@@ -21,6 +21,17 @@ export const HydrationPage = () => {
   const [success, setSuccess] = useState('');
 
   const favoriteSnack = 'Dark Chocolate Almonds';
+
+  useEffect(() => {
+  // Subscribe to hydration changes
+  const unsubscribe = hydrationService.subscribe(setGlasses);
+
+  // Initialize glasses from the service
+  setGlasses(hydrationService.getHydration());
+
+  return () => unsubscribe();
+}, []);
+
 
   useEffect(() => {
     if (isDark) {
@@ -106,7 +117,7 @@ export const HydrationPage = () => {
     };
 
     try {
-      const response = await fetch(`${API_URL}/api/hydration-logs`, {
+      const response = await fetch(`${API_URL}/api/hydration/log`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
