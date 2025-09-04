@@ -11,6 +11,7 @@ import { SignupPage } from "./pages/SignupPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import "./index.css"; // Your main Tailwind CSS file
 import {Settings }from "./pages/Settings";
+import { BuyMeCoffeePage } from "./pages/BuyMeCoffeePage";
 
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
           <Route path="/mood" element={<MoodPage />} />
           <Route path="/hydration" element={<HydrationPage />} />
           <Route path="/coding" element={<CodingPage />} />
+          <Route path="/buycoffee" element={<BuyMeCoffeePage />} />
 
         </Route>
       </Routes>

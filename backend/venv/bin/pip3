@@ -1,4 +1,4 @@
-#!/home/ubuntu/DevWell/backend/venv/bin/python3
+#!/home/wes/Desktop/plp/DevWell/backend/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
