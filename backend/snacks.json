@@ -1,0 +1,102 @@
+{
+  "vegetarian": {
+    "tired": {
+      "quick": [
+        {"name": "Greek yogurt with berries", "type": "snack", "protein": true},
+        {"name": "Edamame", "type": "snack", "protein": true},
+        {"name": "Herbal tea", "type": "drink"}
+      ],
+      "meal": [
+        {"name": "Quinoa salad with chickpeas", "type": "meal", "protein": true},
+        {"name": "Veggie stir-fry with tofu", "type": "meal", "protein": true},
+        {"name": "Green smoothie", "type": "drink"}
+      ]
+    },
+    "stressed": {
+      "quick": [
+        {"name": "Hummus with carrot sticks", "type": "snack", "protein": true},
+        {"name": "Dark chocolate with almonds", "type": "snack", "protein": true},
+        {"name": "Chamomile tea", "type": "drink"}
+      ],
+      "meal": [
+        {"name": "Lentil soup with spinach", "type": "meal", "protein": true},
+        {"name": "Grilled veggie wrap", "type": "meal"},
+        {"name": "Warm almond milk", "type": "drink"}
+      ]
+    },
+    "focused": {
+      "quick": [
+        {"name": "Blueberries with cottage cheese", "type": "snack", "protein": true},
+        {"name": "Whole-grain crackers with cheese", "type": "snack"},
+        {"name": "Matcha latte", "type": "drink"}
+      ],
+      "meal": [
+        {"name": "Avocado toast with egg", "type": "meal", "protein": true},
+        {"name": "Chickpea salad with feta", "type": "meal", "protein": true},
+        {"name": "Kombucha", "type": "drink"}
+      ]
+    },
+    "default": {
+      "quick": [
+        {"name": "Apple slices with peanut butter", "type": "snack", "protein": true},
+        {"name": "Veggie sticks with guacamole", "type": "snack"},
+        {"name": "Coconut water", "type": "drink"}
+      ],
+      "meal": [
+        {"name": "Pasta primavera with parmesan", "type": "meal"},
+        {"name": "Tofu scramble with veggies", "type": "meal", "protein": true},
+        {"name": "Fresh orange juice", "type": "drink"}
+      ]
+    }
+  },
+  "vegan": {
+    "tired": {
+      "quick": [
+        {"name": "Edamame", "type": "snack", "protein": true},
+        {"name": "Chia seed pudding", "type": "snack", "protein": true},
+        {"name": "Green tea", "type": "drink"}
+      ],
+      "meal": [
+        {"name": "Quinoa bowl with black beans", "type": "meal", "protein": true},
+        {"name": "Tempeh stir-fry", "type": "meal", "protein": true},
+        {"name": "Coconut milk smoothie", "type": "drink"}
+      ]
+    },
+    "stressed": {
+      "quick": [
+        {"name": "Hummus with cucumber", "type": "snack", "protein": true},
+        {"name": "Vegan dark chocolate", "type": "snack"},
+        {"name": "Lavender tea", "type": "drink"}
+      ],
+      "meal": [
+        {"name": "Lentil curry with rice", "type": "meal", "protein": true},
+        {"name": "Vegan veggie burger", "type": "meal", "protein": true},
+        {"name": "Oat milk latte", "type": "drink"}
+      ]
+    },
+    "focused": {
+      "quick": [
+        {"name": "Roasted chickpeas", "type": "snack", "protein": true},
+        {"name": "Kale chips", "type": "snack"},
+        {"name": "Matcha smoothie", "type": "drink"}
+      ],
+      "meal": [
+        {"name": "Tofu avocado wrap", "type": "meal", "protein": true},
+        {"name": "Vegan quinoa salad", "type": "meal", "protein": true},
+        {"name": "Kombucha", "type": "drink"}
+      ]
+    },
+    "default": {
+      "quick": [
+        {"name": "Fruit salad with chia seeds", "type": "snack", "protein": true},
+        {"name": "Veggie sticks with tahini", "type": "snack", "protein": true},
+        {"name": "Almond milk", "type": "drink"}
+      ],
+      "meal": [
+        {"name": "Vegan pasta with nutritional yeast", "type": "meal"},
+        {"name": "Falafel bowl", "type": "meal", "protein": true},
+        {"name": "Fresh lemon water", "type": "drink"}
+      ]
+    }
+  }
+}
