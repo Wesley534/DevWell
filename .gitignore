@@ -26,6 +26,7 @@ dist-ssr
 log.txt
 
 
+
 # Ignore Python cache
 __pycache__/
 *.py[cod]                                                                                                                                                                                                                                   devwell.db
