@@ -25,10 +25,11 @@ export const MainLayout = () => {
   };
 
   const navItems = [
-    { path: '/dashboard', label: 'Dashboard' },
-    { path: '/mood', label: 'Mental Health' },
-    { path: '/hydration', label: 'Hydration' },
-    { path: '/coding', label: 'Coding Sessions' },
+    { path: '/dashboard', label: 'My Space' },
+    { path: '/mood', label: 'Mind Check' },
+    { path: '/hydration', label: 'Stay Fresh 💧' },
+    { path: '/coding', label: 'Focus Mode ⌨️' },
+    { path: '/buycoffee', label: 'Fuel the Journey ☕' },
   ];
 
   return (
