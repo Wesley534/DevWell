@@ -38,6 +38,14 @@ export const Dashboard = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Mood options for display
+  const moodOptions = [
+    { name: 'Excellent', value: 5, color: 'bg-green-400' },
+    { name: 'Good', value: 4, color: 'bg-green-300' },
+    { name: 'Neutral', value: 3, color: 'bg-yellow-400' },
+    { name: 'Poor', value: 2, color: 'bg-red-400' },
+  ];
+
   // Update theme
   useEffect(() => {
     if (isDark) {
@@ -95,6 +103,7 @@ export const Dashboard = () => {
         });
         if (statsResponse.ok) {
           const data = await statsResponse.json();
+          console.log('Dashboard stats response:', data); // Debug
           setStats({
             mood_score: data.mood_score || 0,
             hydration_glasses: data.hydration_glasses || 0,
@@ -113,8 +122,10 @@ export const Dashboard = () => {
           }, 1500);
           return;
         } else {
+          const errorData = await statsResponse.json();
+          console.error('Stats API error:', errorData);
           setError('Failed to load dashboard data');
-          toast.error('Failed to load dashboard data');
+          toast.error(`Failed to load dashboard data: ${errorData.detail || 'Unknown error'}`);
         }
 
         // Fetch weekly trends
@@ -134,16 +145,38 @@ export const Dashboard = () => {
           )
         );
         const [moodTrends, hydrationTrends, codingTrends] = await Promise.all(
-          trendResponses.map(async (res) => {
-            if (res.ok) return res.json();
-            throw new Error('Failed to fetch trends');
+          trendResponses.map(async (res, index) => {
+            if (res.ok) {
+              const data = await res.json();
+              console.log(`Trends response (${trendEndpoints[index]}):`, data); // Debug
+              // Sort by created_at descending and take first 4
+              return data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 4);
+            }
+            console.error(`Trend API error (${res.url}):`, await res.json());
+            return []; // Return empty array on error
           })
         );
+
+        // Calculate today's coding sessions and focus time from trends
+        const today = new Date().toISOString().split('T')[0];
+        const todayCodingSessions = codingTrends.filter(
+          (trend) => new Date(trend.created_at).toISOString().split('T')[0] === today
+        );
+        const codingSessionsCount = todayCodingSessions.length;
+        const focusTimeMinutes = todayCodingSessions.reduce((sum, trend) => sum + (trend.duration_minutes || 0), 0);
+
         setWeeklyTrends({
-          mood: moodTrends.data || [],
-          hydration: hydrationTrends.data || [],
-          coding: codingTrends.data || [],
+          mood: moodTrends || [],
+          hydration: hydrationTrends || [],
+          coding: codingTrends || [],
         });
+
+        // Update stats with today's coding data
+        setStats((prev) => ({
+          ...prev,
+          coding_sessions: codingSessionsCount,
+          focus_time: focusTimeMinutes,
+        }));
 
         // Fetch latest mood
         const moodResponse = await fetch(`${API_URL}/api/mood/latest`, {
@@ -154,45 +187,51 @@ export const Dashboard = () => {
         });
         if (moodResponse.ok) {
           const data = await moodResponse.json();
-          
-          setLatestMood(data.mood_score|| null);
+          console.log('Latest mood response:', data); // Debug
+          setLatestMood(data.mood_score !== undefined ? data.mood_score : null);
         } else {
-          setError('Failed to load latest mood');
-          toast.error('Failed to load latest mood');
+          const errorData = await moodResponse.json();
+          console.error('Mood API error:', errorData);
+          if (errorData.detail === 'No mood logs found') {
+            setLatestMood(null); // Handle no mood logs gracefully
+          } else {
+            setError(`Failed to load latest mood: ${errorData.detail || 'Unknown error'}`);
+            toast.error(`Failed to load latest mood: ${errorData.detail || 'Unknown error'}`);
+          }
+        }
+
+        // Fetch latest hydration
+        const hydrationResponse = await fetch(`${API_URL}/api/hydration/latest`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (hydrationResponse.ok) {
+          const data = await hydrationResponse.json();
+          console.log('Latest hydration response:', data); // Debug
+          setStats((prev) => ({
+            ...prev,
+            hydration_glasses: data.water_glasses || 0,
+            hydration_goal: data.daily_goal || 8,
+          }));
+        } else {
+          const errorData = await hydrationResponse.json();
+          console.error('Hydration API error:', errorData);
+          toast.error(`Failed to load latest hydration: ${errorData.detail || 'Unknown error'}`);
         }
       } catch (err) {
+        console.error('Fetch error:', err);
         setError('An error occurred while fetching data');
         toast.error('An error occurred while fetching data');
       } finally {
         setLoading(false);
       }
-
-      // Fetch latest hydration
-const hydrationResponse = await fetch(`${API_URL}/api/hydration/latest`, {
-  headers: {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  },
-});
-
-if (hydrationResponse.ok) {
-  const data = await hydrationResponse.json();
-  // Update the stats state with the latest hydration
-  setStats(prev => ({
-    ...prev,
-    hydration_glasses: data.water_glasses || 0, // make sure this matches your schema field
-  }));
-} else {
-  toast.error('Failed to load latest hydration');
-}
-
     };
-      
-    
+
     fetchDashboardData();
   }, [navigate]);
 
-  
   const toggleTheme = () => setIsDark(!isDark);
 
   const formatTime = (seconds) => {
@@ -202,12 +241,19 @@ if (hydrationResponse.ok) {
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-   const addHydrationGlass = () => {
-  setStats(prev => ({
-    ...prev,
-    hydration_glasses: Math.min(prev.hydration_glasses + 1, prev.hydration_goal)
-  }));
-};
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No Date';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  };
+
+  const addHydrationGlass = () => {
+    setStats((prev) => ({
+      ...prev,
+      hydration_glasses: Math.min(prev.hydration_glasses + 1, prev.hydration_goal),
+    }));
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -230,7 +276,7 @@ if (hydrationResponse.ok) {
         <h2 className="text-3xl font-bold text-emerald-800 dark:text-emerald-200">
           Developer Wellness Dashboard
         </h2>
-        <Button
+        {/* <Button
           variant="ghost"
           size="icon"
           onClick={toggleTheme}
@@ -241,7 +287,7 @@ if (hydrationResponse.ok) {
           ) : (
             <Moon className="h-6 w-6 text-emerald-500" />
           )}
-        </Button>
+        </Button> */}
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left: Mood & Hydration Cards */}
@@ -254,18 +300,16 @@ if (hydrationResponse.ok) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Progress value={stats.mood_score * 20} className="h-2 bg-emerald-100 dark:bg-blue-900" />
+              <Progress value={(latestMood !== null ? latestMood : stats.mood_score) * 20} className="h-2 bg-emerald-100 dark:bg-blue-900" />
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-             Mood Score: {latestMood ? latestMood : stats.mood_score}/5
-              {/* Mood Score: {stats.mood_score}/5*/}
-              {/* {latestMood && ` (Latest: ${latestMood})`} */}
+                Mood Score: {latestMood !== null ? `${moodOptions.find(m => m.value === latestMood)?.name || latestMood} (${latestMood}/5)` : 'No mood logged yet'}
               </p>
               {weeklyTrends.mood.length > 0 && (
                 <div className="mt-4">
                   <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Weekly Mood Trend</p>
                   <ul className="text-sm text-gray-600 dark:text-gray-400">
                     {weeklyTrends.mood.map((trend, index) => (
-                      <li key={index}>{trend.date}: {trend.score}/5</li>
+                      <li key={index}>{formatDate(trend.created_at)}: {moodOptions.find(m => m.value === trend.mood_score)?.name || trend.mood_score}/5</li>
                     ))}
                   </ul>
                 </div>
@@ -287,13 +331,15 @@ if (hydrationResponse.ok) {
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                 {stats.hydration_glasses}/{stats.hydration_goal} glasses
               </p>
-              
+              <Button onClick={addHydrationGlass} className="mt-2 w-full">
+                Add Glass
+              </Button>
               {weeklyTrends.hydration.length > 0 && (
                 <div className="mt-4">
                   <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Weekly Hydration Trend</p>
                   <ul className="text-sm text-gray-600 dark:text-gray-400">
                     {weeklyTrends.hydration.map((trend, index) => (
-                      <li key={index}>{trend.date}: {trend.glasses} glasses</li>
+                      <li key={index}>{formatDate(trend.created_at)}: {trend.water_glasses} glasses</li>
                     ))}
                   </ul>
                 </div>
@@ -394,7 +440,7 @@ if (hydrationResponse.ok) {
                 <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Weekly Coding Trend</p>
                 <ul className="text-sm text-gray-600 dark:text-gray-400">
                   {weeklyTrends.coding.map((trend, index) => (
-                    <li key={index}>{trend.date}: {trend.sessions} sessions</li>
+                    <li key={index}>{formatDate(trend.created_at)}: {trend.duration_minutes} minutes</li>
                   ))}
                 </ul>
               </div>

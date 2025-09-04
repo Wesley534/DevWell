@@ -7,8 +7,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str = os.getenv("SECRET_KEY", os.urandom(32).hex())  # Secure default
     SQLALCHEMY_DATABASE_URL: str = os.getenv("SQLALCHEMY_DATABASE_URL", "sqlite:///./devwell.db")
 
-    ALLOWED_ORIGINS: List[str] = ["https://aidevwell.netlify.app"]
-    # ALLOWED_ORIGINS: List[str] = ["http://localhost:5173"]
+    # ALLOWED_ORIGINS: List[str] = ["https://aidevwell.netlify.app"]
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:5173"]
 
 
 
