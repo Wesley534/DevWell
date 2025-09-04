@@ -18,6 +18,7 @@ export const MoodPage = () => {
   const [description, setDescription] = useState('');
   const [tiredness, setTiredness] = useState(5);
   const [weeklyTrends, setWeeklyTrends] = useState([]);
+  const [latestMood, setLatestMood] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -40,7 +41,7 @@ export const MoodPage = () => {
   }, [isDark]);
 
   useEffect(() => {
-    const fetchWeeklyTrends = async () => {
+    const fetchMoodData = async () => {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) {
         setError('Authentication required');
@@ -49,27 +50,51 @@ export const MoodPage = () => {
       }
 
       try {
-        const response = await fetch(`${API_URL}/api/mood/weekly-trends`, {
+        // Fetch weekly trends
+        const trendsResponse = await fetch(`${API_URL}/api/mood/weekly-trends`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
-        if (response.ok) {
-          setWeeklyTrends(await response.json());
-        } else if (response.status === 401) {
+        if (trendsResponse.ok) {
+          setWeeklyTrends(await trendsResponse.json());
+        } else if (trendsResponse.status === 401) {
           localStorage.removeItem('token');
           sessionStorage.removeItem('token');
           window.location.href = '/login';
         } else {
-          setError('Failed to load weekly trends');
+          const errorData = await trendsResponse.json();
+          console.error('Weekly trends error:', errorData);
+          setError(`Failed to load weekly trends: ${errorData.detail || 'Unknown error'}`);
+        }
+
+        // Fetch latest mood
+        const latestResponse = await fetch(`${API_URL}/api/mood/latest`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (latestResponse.ok) {
+          const data = await latestResponse.json();
+          setLatestMood(data);
+        } else {
+          const errorData = await latestResponse.json();
+          console.error('Latest mood error:', errorData);
+          if (errorData.detail === 'No mood logs found') {
+            setLatestMood(null); // Handle no mood logs gracefully
+          } else {
+            setError(`Failed to load latest mood: ${errorData.detail || 'Unknown error'}`);
+          }
         }
       } catch (err) {
-        setError('An error occurred while fetching trends');
+        console.error('Fetch error:', err);
+        setError('An error occurred while fetching mood data');
       }
     };
 
-    fetchWeeklyTrends();
+    fetchMoodData();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -88,7 +113,7 @@ export const MoodPage = () => {
 
     const payload = {
       mood_score: moodOptions.find((m) => m.name === mood)?.value || 3,
-      notes: description,
+      notes: description || null,
       tiredness_level: Number(tiredness),
     };
 
@@ -103,17 +128,22 @@ export const MoodPage = () => {
       });
 
       if (response.ok) {
+        const data = await response.json();
         setSuccess('Mood logged successfully!');
         setMood('');
         setDescription('');
         setTiredness(5);
+        setLatestMood(data); // Update latest mood
+        // Refresh weekly trends
         const trendsResponse = await fetch(`${API_URL}/api/mood/weekly-trends`, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         });
         if (trendsResponse.ok) {
           setWeeklyTrends(await trendsResponse.json());
         } else {
-          setError('Failed to refresh weekly trends');
+          const errorData = await trendsResponse.json();
+          console.error('Weekly trends refresh error:', errorData);
+          setError(`Failed to refresh weekly trends: ${errorData.detail || 'Unknown error'}`);
         }
       } else if (response.status === 401) {
         localStorage.removeItem('token');
@@ -121,10 +151,12 @@ export const MoodPage = () => {
         window.location.href = '/login';
       } else {
         const errorData = await response.json();
+        console.error('Mood log error:', errorData);
         setError(errorData.detail || 'Failed to log mood');
       }
     } catch (err) {
-      setError('An error occurred while logging mood');
+        console.error('Mood log fetch error:', err);
+        setError('An error occurred while logging mood');
     } finally {
       setLoading(false);
     }
@@ -152,7 +184,9 @@ export const MoodPage = () => {
         <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-emerald-200/50 dark:border-blue-700/50 shadow-lg shadow-emerald-500/10 dark:shadow-blue-900/10">
           <CardHeader>
             <CardTitle className="text-emerald-800 dark:text-emerald-200">Log Your Mood</CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-400">How are you feeling today?</CardDescription>
+            <CardDescription className="text-gray-600 dark:text-gray-400">
+              {latestMood ? `Latest Mood: ${moodOptions.find((m) => m.value === latestMood.mood_score)?.name || 'Unknown'} (${latestMood.mood_score}/5)` : 'No mood logged yet'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

@@ -28,6 +28,7 @@ export const CodingPage = () => {
   const navigate = useNavigate();
 
   const favoriteSnack = 'Dark Chocolate Almonds';
+  const optimalSessionLength = 25 * 60; // 25 minutes in seconds
 
   // Update theme
   useEffect(() => {
@@ -46,10 +47,23 @@ export const CodingPage = () => {
       const { sessionTime, isTracking } = timerService.getTimerState();
       setSessionTime(sessionTime);
       setIsTracking(isTracking);
+      // console.log('Timer state updated:', { sessionTime, isTracking }); // Debug
     };
     updateTimer(); // Initial sync
     const unsubscribe = timerService.subscribe(updateTimer);
-    return unsubscribe;
+
+    // Handle cross-tab updates
+    const handleStorageChange = (e) => {
+      if (e.key === 'codingSessionTime' || e.key === 'codingIsTracking') {
+        updateTimer();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Fetch initial data
@@ -75,7 +89,11 @@ export const CodingPage = () => {
         });
         if (sessionsResponse.ok) {
           const data = await sessionsResponse.json();
-          setWeeklySessions(data.data || []);
+          // Sort by created_at descending and take first 4
+          const sortedSessions = data
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 4);
+          setWeeklySessions(sortedSessions);
         } else if (sessionsResponse.status === 401) {
           localStorage.removeItem('token');
           sessionStorage.removeItem('token');
@@ -113,14 +131,19 @@ export const CodingPage = () => {
   const handleStartStop = () => {
     if (isTracking) {
       timerService.stopTimer();
+      setIsTracking(false); // Explicitly update state
+      console.log('Stop button clicked, timer stopped'); // Debug
     } else {
       timerService.startTimer();
+      setIsTracking(true); // Explicitly update state
+      console.log('Start button clicked, timer started'); // Debug
     }
   };
 
   const handleReset = () => {
     if (window.confirm('Reset session time?')) {
       timerService.resetTimer();
+      setIsTracking(false); // Ensure tracking is stopped on reset
       setNotes('');
     }
   };
@@ -168,6 +191,7 @@ export const CodingPage = () => {
         setSuccess('Coding session logged successfully!');
         toast.success('Coding session logged successfully!');
         timerService.resetTimer();
+        setIsTracking(false); // Ensure tracking is stopped after saving
         setNotes('');
 
         // Refresh weekly sessions
@@ -176,7 +200,10 @@ export const CodingPage = () => {
         });
         if (trendsResponse.ok) {
           const data = await trendsResponse.json();
-          setWeeklySessions(data.data || []);
+          const sortedSessions = data
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 4);
+          setWeeklySessions(sortedSessions);
         } else {
           setError('Failed to refresh coding sessions');
           toast.error('Failed to refresh coding sessions');
@@ -204,11 +231,18 @@ export const CodingPage = () => {
     }
   };
 
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs}h ${mins}m ${secs}s`;
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'No Date';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return 'Invalid Date';
-    return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   };
 
   const averageSession = weeklySessions.length
@@ -222,20 +256,10 @@ export const CodingPage = () => {
         }, { hour: 0, count: 0 }).hour * 1000 * 3600
       ).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })
     : 'N/A';
-  const optimalSessionLength = 25;
   const insights =
-    averageSession > optimalSessionLength
+    averageSession > optimalSessionLength / 60
       ? ['Your sessions are longer than recommended. Consider 25-minute Pomodoro sessions for better focus.']
       : ['Great job keeping sessions concise! Try maintaining this for optimal productivity.'];
-
-  const uniqueSessions = weeklySessions.reduce((acc, session) => {
-    const date = new Date(session.created_at).toLocaleDateString('en-US');
-    if (!acc[date] || new Date(session.created_at) > new Date(acc[date].created_at)) {
-      acc[date] = session;
-    }
-    return acc;
-  }, {});
-  const filteredSessions = Object.values(uniqueSessions);
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 p-4">
@@ -250,11 +274,17 @@ export const CodingPage = () => {
               <div
                 className={cn(
                   'relative flex items-center justify-center h-64 w-64 rounded-full bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-4 border-emerald-500/50 shadow-xl shadow-emerald-500/20 dark:shadow-blue-900/20',
-                  isTracking && 'animate-pulse'
+                  isTracking && 'animate-pulse',
+                  sessionTime > optimalSessionLength && 'border-yellow-500/50'
                 )}
               >
-                <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-300">
-                  {Math.floor(sessionTime / 60)}m {sessionTime % 60}s
+                <div
+                  className={cn(
+                    'text-4xl font-bold',
+                    sessionTime > optimalSessionLength ? 'text-yellow-600 dark:text-yellow-400' : 'text-emerald-700 dark:text-emerald-300'
+                  )}
+                >
+                  {formatTime(sessionTime)}
                 </div>
                 {isTracking && (
                   <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-cyan-500 animate-spin-slow" />
@@ -337,7 +367,7 @@ export const CodingPage = () => {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-sm text-emerald-700 dark:text-emerald-300">Optimal Session Length</span>
-              <span className="text-sm font-medium text-emerald-800 dark:text-emerald-200">{optimalSessionLength} minutes</span>
+              <span className="text-sm font-medium text-emerald-800 dark:text-emerald-200">{optimalSessionLength / 60} minutes</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-emerald-700 dark:text-emerald-300">Average Session</span>
@@ -355,16 +385,14 @@ export const CodingPage = () => {
           </div>
           <div className="pt-2">
             <h4 className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Weekly Sessions</h4>
-            {filteredSessions.length > 0 ? (
+            {weeklySessions.length > 0 ? (
               <>
-                {filteredSessions.map((session, index) => (
-                  <div key={index} className="flex justify-between items-center mt-2">
-                    <span className="text-sm text-emerald-700 dark:text-emerald-300">
-                      {formatDate(session.created_at)}: {session.duration_minutes}m{session.notes ? ` (${session.notes})` : ''}
-                    </span>
-                  </div>
-                ))}
-                <BarChart width={300} height={200} data={filteredSessions}>
+                <ul className="text-sm text-gray-600 dark:text-gray-400">
+                  {weeklySessions.map((session, index) => (
+                    <li key={index}>{formatDate(session.created_at)}: {session.duration_minutes} minutes</li>
+                  ))}
+                </ul>
+                <BarChart width={300} height={200} data={weeklySessions}>
                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#1E3A8A' : '#D1D5DB'} />
                   <XAxis dataKey="created_at" tickFormatter={formatDate} stroke={isDark ? '#6EE7B7' : '#047857'} />
                   <YAxis stroke={isDark ? '#6EE7B7' : '#047857'} />
